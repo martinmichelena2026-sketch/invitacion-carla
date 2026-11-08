@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Invitación · Mis 15 Carla</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;font-family:system-ui,sans-serif;color:#f6ecff;background:radial-gradient(circle at 50% 25%,#4a1c82,#14052b 75%)}
+.c{width:min(100%,380px);text-align:center;padding:28px 20px;border-radius:26px;border:2px solid transparent;background:linear-gradient(#2b0d55,#210a47) padding-box,linear-gradient(135deg,#ffe9b0,#a24fe0,#ffd98a) border-box;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.ic{width:74px;height:74px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;font-size:2.2rem;background:linear-gradient(135deg,#fff1c7,#ffd98a);color:#2b0b4d}
+.ic.bad{background:#b3365a;color:#fff}.ic.used{background:#8a7ab0;color:#fff}
+h2{margin:0 0 4px}small{color:#d9c2f0;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem}.nm{font-size:1.7rem;font-weight:700;margin:12px 0 4px}
+button{width:100%;padding:16px;margin-top:18px;border:0;border-radius:99px;font:700 1.05rem system-ui;cursor:pointer;background:linear-gradient(135deg,#fff1c7,#ffd98a);color:#2b0b4d}
+button:disabled{opacity:.5}details{margin-top:20px;color:#d9c2f0;font-size:.85rem}
+input{width:100%;padding:12px;margin:8px 0 0;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font:16px system-ui}
+.err{color:#ffb4c8;min-height:1.2em;font-size:.85rem}
+</style></head><body><div class="c" id="app"><small>Cargando…</small></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+<script>
+firebase.initializeApp(CFG.firebase);var auth=firebase.auth(),db=firebase.firestore(),$=function(i){return document.getElementById(i)},D=null,U=null,msg='';
+var id=(new URLSearchParams(location.search).get('c')||location.hash.slice(1)).replace(/[^0-9a-f]/gi,'');
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function draw(){var a=$('app');
+ if(D===null){a.innerHTML='<div class="ic bad">✕</div><h2>Invitación no válida</h2><small>No encontramos este código</small>';return}
+ var h='<small>Mis 15 · Carla Michelena</small>',n='<div class="nm">'+esc(D.nombre)+'</div><p>'+(D.acomp?'+'+D.acomp+' acompañante(s)':'Sin acompañantes')+'</p>';
+ if(D.presente)a.innerHTML=h+'<div class="ic used" style="margin-top:14px">✔</div><h2>Ya fue canjeada</h2>'+n+'<small>Ingresó '+esc(D.hora)+'</small>';
+ else if(U)a.innerHTML=h+'<div class="ic" style="margin-top:14px">✓</div><h2>Invitación válida</h2>'+n+'<button id="ok">Confirmar presencia</button><p class="err">'+msg+'</p>';
+ else a.innerHTML=h+'<div class="ic" style="margin-top:14px">✓</div><h2>Invitación válida</h2>'+n+'<details><summary>Soy personal de la puerta</summary><form id="lf"><input id="em" type="email" placeholder="Correo"><input id="pw" type="password" placeholder="Contraseña"><p class="err" id="er"></p><button>Entrar</button></form></details>';
+ if($('ok'))$('ok').onclick=function(){this.disabled=true;db.collection('pases').doc(id).update({presente:true,hora:new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'})}).catch(function(e){msg=e.code==='permission-denied'?'No se pudo: ya fue canjeada o tu cuenta no tiene permiso':'Error: '+e.code;draw()})};
+ if($('lf'))$('lf').onsubmit=function(e){e.preventDefault();auth.signInWithEmailAndPassword($('em').value.trim(),$('pw').value).catch(function(){$('er').textContent='Datos incorrectos'})}}
+auth.onAuthStateChanged(function(u){U=u;if(D!==undefined&&document.readyState)draw()});
+if(id.length<10)draw();else db.collection('pases').doc(id).onSnapshot(function(s){D=s.exists?s.data():null;draw()},function(){D=null;draw()});
+</script></body></html>
