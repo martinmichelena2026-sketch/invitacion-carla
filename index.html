@@ -224,7 +224,20 @@ function schedBar(t){var c=CH[PR[barN%8]],i;
   ML[barN%16].forEach(function(n){tone(n[1],t+n[0]*eighth,n[2]*eighth*1.15+.5,.17,false)});
   barN++}
 function pump(){while(nextT<ctx.currentTime+1.6){schedBar(nextT);nextT+=eighth*8}}
+var synthOn=false,song=null;
 function startMusic(){
+  try{var a=new Audio('musica.mp3');a.loop=true;a.preload='auto';a.volume=0;song=a;
+    var fail=function(){if(song){song=null;startSynth()}};
+    a.addEventListener('error',fail,{once:true});
+    var pr=a.play();if(pr&&pr.then)pr.then(function(){
+      $('mu').classList.add('on');
+      var vol=0,fi=setInterval(function(){vol=Math.min(.85,vol+.05);try{a.volume=vol}catch(_){}if(vol>=.85)clearInterval(fi)},150);
+      $('mu').onclick=function(e){e.stopPropagation();a.muted=!a.muted;this.textContent=a.muted?'🔇':'🎵'};
+      document.addEventListener('visibilitychange',function(){if(!song)return;if(document.hidden)a.pause();else a.play().catch(function(){})})
+    }).catch(fail)
+  }catch(err){startSynth()}}
+function startSynth(){
+  if(synthOn)return;synthOn=true;
   try{var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;ctx=new AC();
     master=ctx.createGain();master.gain.value=0;bus=ctx.createGain();
     var conv=ctx.createConvolver(),len=Math.floor(ctx.sampleRate*2.8),ir=ctx.createBuffer(2,len,ctx.sampleRate);
